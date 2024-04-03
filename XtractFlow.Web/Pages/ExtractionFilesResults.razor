@@ -1,0 +1,115 @@
+@page "/extraction/files/{NatureId}"
+@implements IDisposable
+@using XtractFlow.Web.Services
+@using XtractFlow.Web.Data
+@using XTractFlow.API.Document;
+@using XTractFlow.API.Result;
+@using XtractFlow.Web.Services.DataStore
+@inject NavigationManager Navigation
+@inject UserCacheService UserCacheService
+@inject IDocumentDataStore DocumentDataStore
+@inject IJSRuntime JS
+
+<h3>@template?.Name grid</h3>
+<div class="col-12">
+    <div class="d-flex">
+        <NavLink class="btn btn-primary mt-5 p-2" href="/extraction">Go back</NavLink>
+    </div>
+</div>
+@if (items.Any())
+{
+    <div class="grid h-auto w-auto">
+        <MudTable Items="@items" Hover="true" Breakpoint="Breakpoint.None" LoadingProgressColor="Color.Info" Loading="@isloading">
+            <HeaderContent>
+                <MudTh>File name</MudTh>
+                @foreach (var field in Fields)
+                {
+                    <MudTh>@field.Name</MudTh>
+                }
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="File name">@context.Key.Name</MudTd>
+                @foreach (var field in Fields)
+                {
+                    <MudTd DataLabel="@(field.Name)" Class="@GetCellClass(context.Value.ExtractedFields?.FirstOrDefault(r => r.FieldName == field.Name))">@(GetValue(context, field))</MudTd>
+                }
+            </RowTemplate>
+        </MudTable>
+    </div>
+    <button class="btn btn-primary" @onclick="SaveAsCsv">Export as CSV</button>
+}
+else if (!isloading)
+{
+    <h3>No document recognized as @template?.Name</h3>
+}
+else
+{
+    <div>Loading...</div>
+}
+
+@code {
+
+    [Parameter]
+    public string NatureId { get; set; }
+
+    bool isloading = false;
+    DocumentTemplate? template;
+    IEnumerable<TemplateField>? Fields => template?.Fields;
+    CancellationTokenSource cts = new();
+    IEnumerable<KeyValuePair<UserDocument, ProcessorResult>> items => UserCacheService.ClassificationResults.Where(r => r.Value?.Template?.Identifier == NatureId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        template = DocumentDataStore.Component.Templates.FirstOrDefault(p => p.Identifier == NatureId);
+        if (template is null || items.Any() is false)
+        {
+            Navigation.NavigateTo("/classification");
+        }
+    }
+
+    private async Task SaveAsCsv()
+    {
+        var fileName = "result.csv";
+        var fileURL = exportAsCsv(items.Select(p => p.Value).ToList());
+        await JS.InvokeVoidAsync("triggerFileDownload", fileName, fileURL);
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+    }
+
+    public string exportAsCsv(IEnumerable<ProcessorResult> result)
+    {
+        var filePath = Path.Combine(DocumentDataStore.StorePath, $"{Guid.NewGuid().ToString()}.csv");
+        var text = new List<string> { string.Join(";", result.SelectMany(r => r.ExtractedFields.Select(p => p.FieldName))) };
+        text = text.Concat(result.Select(r => string.Join(";", r.ExtractedFields.Select(n => n.Value)))).ToList();
+        File.WriteAllLines(filePath, text);
+        return string.Join(Path.DirectorySeparatorChar, filePath.Split(Path.DirectorySeparatorChar)[^3..]);
+    }
+
+    private string? GetValue(KeyValuePair<UserDocument, ProcessorResult> value, TemplateField field)
+    {
+        var extractedField = value.Value?.ExtractedFields?.FirstOrDefault(c => c?.FieldName == field?.Name);
+        var val = extractedField?.Value;
+        if (val is not null)
+        {
+            return val.ToString().Replace("\\n", " ");
+        }
+        return null;
+    }
+
+    public string GetCellClass(ExtractedField? result)
+    {
+        switch (result?.ValidationState)
+        {
+            case FieldValidationState.Valid:
+                return "bg-success";
+            case FieldValidationState.VerificationNeeded:
+                return "bg-warning";
+            default:
+                return "";
+        }
+    }
+
+}

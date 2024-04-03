@@ -1,0 +1,33 @@
+@using XtractFlow.Web.Data
+@using XtractFlow.Web.Services
+
+    <div class="card p-1 m-2 col-lg-2 col-sm-4 text-center">
+        <img class="image-card" src="api/thumbnails/@Document.Id" alt="Card image cap">
+        <div class="card-body bg-light">
+            <p class="card-text text-truncate"><span class="text-break">@(CardTitle ?? Document.Name)</span></p>
+            @if (DisableNavLink is false)
+            {
+                <NavLink class="nav-link nav" href="@(getLink(Document))">View fields</NavLink>
+            }
+        </div>
+    </div>
+
+@code {
+    [Parameter]
+    public UserDocument Document { get; set; }
+
+    [Parameter]
+    public string? CardTitle { get; set; } = null;
+    
+    [Parameter]
+    public EventCallback<UserDocument> OnClickDeleteButton { get; set; }
+    
+    [Parameter]
+    public bool DisableNavLink { get; set; }
+    
+    
+    private string getLink(UserDocument document)
+    {
+        return $"extraction/file/{document.Id.ToString()}";
+    }
+}

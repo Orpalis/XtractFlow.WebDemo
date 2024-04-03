@@ -1,0 +1,27 @@
+# Created by https://www.toptal.com/developers/gitignore/api/rider,dotnetcore
+# Edit at https://www.toptal.com/developers/gitignore?templates=rider,dotnetcore
+
+### DotnetCore ###
+# .NET Core build folders
+*/**/bin/
+*/**/obj/
+
+# Common node modules locations
+/node_modules
+/wwwroot/node_modules
+
+### Rider ###
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+# CMake
+cmake-build-*/
+
+.idea/
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# End of https://www.toptal.com/developers/gitignore/api/rider,dotnetcore
+ XtractFlow.Web/wwwroot/circuit_store
+.DS_Store
+XtractFlow.WebDemo.sln.DotSettings.user

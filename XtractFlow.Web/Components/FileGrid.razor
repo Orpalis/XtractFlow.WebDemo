@@ -1,0 +1,56 @@
+@using XtractFlow.Web.Data
+@using XtractFlow.Web.Services
+
+
+<div class="">
+    <div class="row mb-5">
+    @if (Title is not null && (TitleLink is null || DisableNavLink is true))
+    {
+        <div class="col-auto">
+            <h3 class="">@Title</h3>
+        </div>
+    }
+    else if (Title is not null && TitleLink is not null)
+    {
+
+        <div class="col-auto">
+            <h3 class="">@Title</h3>
+        </div>
+        <div class="col-2">
+            <MudTooltip Text="Grid view" >
+                <NavLink class="btn btn-outline-primary" href="@TitleLink">
+                    <div class="oi oi-grid-three-up"></div>
+                </NavLink>
+            </MudTooltip>
+        </div>
+    }
+    </div>
+    <div class="row justify-content-center">
+        @if (Documents is not null)
+        {
+            foreach (var document in Documents)
+            {
+                <FileCard Document="@document" OnClickDeleteButton="OnDeleteDocument" DisableNavLink="DisableNavLink"/>
+            }
+        }
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public IEnumerable<UserDocument>? Documents { get; set; }
+
+    [Parameter]
+    public EventCallback<UserDocument> OnDeleteDocument { get; set; }
+
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public string? TitleLink { get; set; }
+    
+    [Parameter]
+    public bool DisableNavLink { get; set; }
+
+}

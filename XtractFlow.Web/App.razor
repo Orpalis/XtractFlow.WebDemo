@@ -1,0 +1,21 @@
+﻿@using XtractFlow.Web.Shared
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        @* <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" /> *@
+        <FocusOnNavigate RouteData="@routeData" Selector="h1"/>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <TransitionableRoutePrimary RouteData="@routeData" ForgetStateOnTransition="true">
+                <AnimatedRouteView DefaultLayout="@typeof(AnimatedLayout)"/>
+            </TransitionableRoutePrimary>
+            <TransitionableRouteSecondary RouteData="@routeData" ForgetStateOnTransition="true">
+                <AnimatedRouteView DefaultLayout="@typeof(AnimatedLayout)"/>
+            </TransitionableRouteSecondary>
+        </LayoutView>
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

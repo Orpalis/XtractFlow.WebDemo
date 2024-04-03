@@ -1,0 +1,47 @@
+@page "/extraction"
+@using XtractFlow.Web.Services
+@using XtractFlow.Web.Components
+@using XtractFlow.Web.Data
+@using XTractFlow.API.Document;
+@using XTractFlow.API.Result;
+@using XtractFlow.Web.Services.DataStore
+
+@inject IDocumentDataStore DocumentDataStore
+@inject IWebHostEnvironment WebHostEnvironment
+@inject UserCacheService UserCacheService
+@inject NavigationManager Navigation
+
+
+
+<div class="row align-items-center">
+    <div class="col-2">
+        <NavLink href="/component-designer">
+            <div class="btn btn-outline-primary">Start again</div>
+        </NavLink>
+    </div>
+
+    <div class="col-5 offset-1">
+        <h1 class="text-center">Extraction</h1>
+    </div>
+</div>
+
+
+<div class="container-fluid">
+    @foreach (var group in ClassificationGroup)
+    {
+        <FileGrid
+            Documents="group?.Select(p => p.Key)"
+            Title="@(group?.Key?.Name ?? "Not detected")"
+            TitleLink="@($"/extraction/files/{group?.Key?.Identifier}")"
+            DisableNavLink="@(group.Key is null)"
+            />
+    }
+</div>
+
+@code {
+    IEnumerable<IGrouping<DocumentTemplate, KeyValuePair<UserDocument, ProcessorResult>>> ClassificationGroup =>
+        UserCacheService.ClassificationResults.GroupBy(r => 
+            DocumentDataStore.Component.Templates.FirstOrDefault(t => 
+                t.Identifier == r.Value?.Template?.Identifier));
+
+}

@@ -1,0 +1,66 @@
+@inherits BlazorTransitionableRoute.TransitionableLayoutComponent
+@using Transition = BlazorTransitionableRoute.Transition
+@using XtractFlow.Web.Pages
+@using Index = XtractFlow.Web.Pages.Index
+
+<div class=" w-100 h-100 overflow-auto p-5 transition @TransitioningClass @(Transition.IntoView ? "transitioned" : "transitioned_behind")">
+    @Body
+</div>
+
+<style>
+    .transition {
+        position: relative;
+    }
+    .transitioned {
+        z-index: 1;
+    }
+    .transitioned_behind {
+    position: absolute;
+        z-index: 0;
+    }
+</style>
+
+@code {
+    private string TransitioningClass => Transition.FirstRender
+        ? "" : $"animate__{TransitioningEffect()} animate__faster animate__animated";
+
+    private string TransitioningEffect()
+    {
+        if (_customTransitions.TryGetValue((TransitionType.fromType, TransitionType.toType), out var custom))
+        {
+            return Transition.IntoView ? custom.effectIn : custom.effectOut;
+        }
+        else
+        {
+            var effect = Transition.IntoView ? "fadeIn" : "fadeOut";
+            var direction = Transition.Backwards ? "Up" : "Down";
+            return effect + direction;
+        }
+    }
+
+    private readonly Dictionary<(Type from, Type to), (string effectOut, string effectIn)> _customTransitions = new()
+        {
+            { (typeof(Index), typeof(ComponentDesigner)), ( "fadeOutUp", "fadeInUp" ) },
+            { (typeof(ComponentDesigner), typeof(Index)), ( "fadeOutDown", "fadeInDown" ) },
+            
+            { (typeof(ComponentDesigner), typeof(FileManager)), ( "fadeOutUp", "fadeInUp"  ) },
+            { (typeof(FileManager), typeof(ComponentDesigner)), ( "fadeOutDown", "fadeInDown" ) },
+            
+            { (typeof(FileManager), typeof(Classification)), ( "fadeOutUp", "fadeInUp"  ) },
+            { (typeof(Classification), typeof(FileManager)), ( "fadeOutDown", "fadeInDown" ) },
+            
+            { (typeof(Classification), typeof(Extraction)), ( "fadeOutUp", "fadeInUp"  ) },
+            { (typeof(Extraction), typeof(Classification)), ( "fadeOutDown", "fadeInDown" ) },
+            
+            { (typeof(Classification), typeof(ExtractionFilesResults)), ( "fadeOutUp", "fadeInUp"  ) },
+            { (typeof(ExtractionFilesResults), typeof(Classification)), ( "fadeOutDown", "fadeInDown" ) },
+            
+            
+            { (typeof(Extraction), typeof(ExtractionFileResult)), ( "fadeOutLeft", "fadeInRight"  ) },
+            { (typeof(ExtractionFileResult), typeof(Extraction)), ( "fadeOutRight", "fadeInLeft" ) },
+            
+        
+            { (typeof(Extraction), typeof(ExtractionFilesResults)), ( "fadeOutLeft", "fadeInRight"  ) },
+            { (typeof(ExtractionFilesResults), typeof(Extraction)), ( "fadeOutRight", "fadeInLeft" ) }
+        };
+}

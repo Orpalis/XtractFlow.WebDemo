@@ -1,0 +1,56 @@
+﻿@using XtractFlow.Web.Services
+@using XtractFlow.Web.Services.DataStore
+@inherits LayoutComponentBase
+@inject IDocumentDataStore DocumentDataStore
+@inject UserCacheService UserCacheService 
+@inject NavigationManager Navigation
+@implements IDisposable     
+
+<PageTitle>XtractFlow - Web integration</PageTitle>
+
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudPaper Height="100vh" Style="overflow:hidden; position:relative;">
+    <MudDrawerContainer Class="mud-height-full">
+        <MudDrawer Open="@openSidebar" Elevation="10" Anchor="Anchor.End" Variant="@DrawerVariant.Persistent" Color="Color.Default">
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h5">Workflow</MudText>
+            </MudDrawerHeader>
+            <MudNavMenu Class="mud-width-full">
+                @* <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">Secondary Text</MudText> *@
+                <MudDivider Class="my-2"/>
+                <MudNavLink @onclick:preventDefault="true" DisableRipple="true" Href="/component-designer">1.Component designer</MudNavLink>
+                <MudNavLink @onclick:preventDefault="true" DisableRipple="true" Href="/files">2. Documents selection</MudNavLink>
+                <MudNavLink @onclick:preventDefault="true" DisableRipple="true" Href="/classification" Match="NavLinkMatch.All">3. Classification</MudNavLink>
+                <MudNavLink @onclick:preventDefault="true" DisableRipple="true"  Href="/extraction" Match="NavLinkMatch.Prefix">4. Extraction</MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
+        <div class="d-flex justify-center align-center mud-height-full">
+            @Body
+        </div>
+    </MudDrawerContainer>
+</MudPaper>
+
+@code
+{
+    bool openSidebar => !Navigation.Uri.EndsWith("/");
+
+    protected override void OnInitialized()
+    {
+        DocumentDataStore.Subscribe(OnStoreChange);
+        UserCacheService.Subscribe(OnStoreChange);
+    }
+
+    private void OnStoreChange()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        DocumentDataStore.Unsubscribe(OnStoreChange);
+        UserCacheService.Unsubscribe(OnStoreChange);
+    }
+}

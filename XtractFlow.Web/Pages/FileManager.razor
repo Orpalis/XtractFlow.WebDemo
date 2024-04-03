@@ -1,0 +1,123 @@
+@page "/files"
+@using XtractFlow.Web.Services
+@using XtractFlow.Web.Components
+@using XtractFlow.Web.Data
+@using XtractFlow.Web.Services.DataStore
+@using XtractFlow.Processor
+
+@inject NavigationManager Navigation
+@inject IDocumentDataStore DocumentDataStore
+@inject UserCacheService UserCacheService
+@inject Processor Processor
+
+<div class="row align-items-center">
+    <div class="col-2">
+        <NavLink href="/component-designer">
+            <div class="btn btn-outline-primary">Start again</div>
+        </NavLink>
+    </div>
+    
+    <div class="col-9">
+        <h1 class="text-center">Documents selection</h1>
+    </div>
+    <div class="col-1">
+        <div class="d-flex justify-content-end">
+            <a class="btn btn-primary ms-auto" @onclick="GoNextStep">
+                <span class="text">Next</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="col-8 offset-md-2 p-2">
+    <div class="input-group p-2" role="group">
+        <InputFile class="form-control form-control-lg"
+                   multiple
+                   OnChange="@LoadFiles"
+                   accept="@string.Join(",", Globals.SupportedImageLoadingFormatsExtensions.Concat(Globals.SupportedPDFImportFormatsExtensions))"/>
+    </div>
+
+    <div class="progress @(progressBarValue is not null ? "" : "visually-hidden")">
+        <div class="progress-bar progress-bar-animated progress-bar-striped" role="progressbar" style="width:@progressBarValue%"></div>
+    </div>
+</div>
+
+
+<div class="container-fluid">
+
+    <FileGrid Documents="DocumentDataStore.Documents" DisableNavLink="true" />
+    
+        @if (DocumentDataStore.Documents.Any())
+        {
+            <div class="col-12">
+                <div class="d-flex justify-content-end">
+                    <a class="btn btn-success mt-5 p-2 ms-auto @(processing || processed ? "disabled" : "")" @onclick="ProcessFiles">
+                        <span class="text">Process files...</span>
+                    </a>
+                    <a class="btn btn-primary mt-5 p-2 ms-auto @(processed is false ? "disabled" : "")" @onclick="GoNextStep">
+                        <span class="text">Next</span>
+                    </a>
+                </div>
+            </div>
+        }
+    
+</div>
+
+@code {
+    int? progressBarValue { get; set; }
+    bool processing { get; set; }
+    bool processed { get; set; }
+    
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        var files = e.GetMultipleFiles(e.FileCount);
+        var i = 0;
+        foreach (var file in files)
+        {
+            await DocumentDataStore.AddFile(file);
+
+            progressBarValue = (int)(((double)++i / e.FileCount) * 100);
+            await InvokeAsync(StateHasChanged);
+        }
+        progressBarValue = null;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ProcessFiles()
+    {
+        processing = true;
+        var fileCount = DocumentDataStore.Documents.Count;
+        var i = 0;
+        progressBarValue = 0;
+        await InvokeAsync(StateHasChanged);
+        
+        await foreach (var processorResult in Processor.ProcessFilesAsync(DocumentDataStore.Documents.Select(p => p.FilePath), DocumentDataStore.Component))
+        {
+            var documentFile = DocumentDataStore.Documents.First(p => p.FilePath == processorResult.filepath);
+            UserCacheService.AddClassification(documentFile, processorResult.result);
+            await InvokeAsync(() =>
+            {
+                progressBarValue = (int)((double) ++i / fileCount * 100);
+                StateHasChanged();
+            });
+        }
+
+        progressBarValue = null;
+        processing = false;
+        processed = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void GoNextStep()
+    {
+        if (DocumentDataStore.Component.EnableClassifier)
+        {
+            InvokeAsync(() => Navigation.NavigateTo("/classification"));
+        }
+        else
+        {
+            InvokeAsync(() => Navigation.NavigateTo("/extraction"));
+        }
+    }
+
+}

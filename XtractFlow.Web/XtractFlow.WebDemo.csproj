@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>XtractFlow.Web</RootNamespace>
+    <UserSecretsId>d99d576a-5ae1-4b51-b6ef-90ab3945d927</UserSecretsId>
+    <LangVersion>latestmajor</LangVersion>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="BlazorTransitionableRoute" Version="4.0.0" />
+    <PackageReference Include="DocuVieware.Blazor" Version="0.9.0.1-rc" />
+    <PackageReference Include="GdPicture.XtractFlow" Version="1.0.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="MudBlazor" Version="6.11.1" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\XtractFlow.Processor\XtractFlow.Processor.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Resources\" />
+    <Folder Include="wwwroot\circuit_store\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\xtractflow_dicts.zip">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="wwwroot\circuit_store\4b880ea9-c5bc-4726-b72d-1800e8a251ac\d4f36a4f-0786-4954-9581-3e659fd9cbe4" />
+    <_ContentIncludedByDefault Remove="wwwroot\circuit_store\d92084b2-b2bc-4402-b202-8e6ec461f99c\670f2bb9-9deb-46df-bc8a-1e203e5fccbe" />
+  </ItemGroup>
+
+</Project>

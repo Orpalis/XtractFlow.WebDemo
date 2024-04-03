@@ -1,0 +1,61 @@
+@page "/classification"
+@using XTractFlow.API.Document;
+@using XTractFlow.API.Result;
+@using XtractFlow.Web.Services
+@using XtractFlow.Web.Components
+@using XtractFlow.Web.Data
+@using XtractFlow.Processor
+@using XtractFlow.Web.Services.DataStore
+
+@inject IDocumentDataStore DocumentDataStore
+@inject UserCacheService UserCacheService
+@inject NavigationManager Navigation
+@inject Processor processor
+
+<div class="row align-items-center">
+    <div class="col-2">
+        <NavLink href="/component-designer">
+            <div class="btn btn-outline-primary">Start again</div>
+        </NavLink>
+    </div>
+
+    <div class="col-5 offset-1">
+        <h1 class="text-center">Classification</h1>
+    </div>
+</div>
+
+<div class="container-fluid">
+    @foreach (var group in ClassificationGroup)
+    {
+        <FileGrid
+            Documents="group?.Select(p => p.Key)"
+            Title="@(group?.Key?.Name ?? "Not detected")"
+            DisableNavLink="true"/>
+    }
+
+    @if (ClassificationGroup.Any())
+    {
+        <div class="col-12">
+            <div class="d-flex justify-content-end">
+                <a class="btn btn-primary mt-5 p-2 ms-auto" @onclick="GoToNextStep">
+                    <span class="text">Next</span>
+                </a>
+            </div>
+        </div>
+    }
+
+
+</div>
+
+@code {
+    IEnumerable<IGrouping<DocumentTemplate, KeyValuePair<UserDocument, ProcessorResult>>> ClassificationGroup =>
+        UserCacheService.ClassificationResults.GroupBy(r =>
+            DocumentDataStore.Component.Templates.FirstOrDefault(t =>
+                t.Identifier == r.Value?.Template?.Identifier));
+    
+    private void GoToNextStep()
+    {
+        Navigation.NavigateTo("/extraction");
+    }
+
+}

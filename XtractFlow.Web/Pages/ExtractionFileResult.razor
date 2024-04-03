@@ -1,0 +1,93 @@
+@page "/extraction/file/{Id:guid}"
+@using XtractFlow.Web.Services
+@using XtractFlow.Web.Data
+@using XTractFlow.API.Result;
+@using XtractFlow.Web.Services.DataStore
+@using GdPicture14
+@using GdPicture14.WEB.Blazor;
+
+@inject IDocumentDataStore DocumentDataStore
+@inject UserCacheService UserCacheService
+
+@if (_document is null)
+{
+    <h3>Loading...</h3>
+}
+else
+{
+    <NavLink class="nav-link" href="/extraction">
+        <button class="btn btn-primary mb-2">
+            Go Back
+        </button>
+    </NavLink>
+
+    <h3>@_document.NameWithoutExtention</h3>
+    <p></p>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-6">
+                <DocuVieware
+                    @ref="DvControl"
+                    ShowToolbar="false"
+                    EnableFormFieldsEdition="false"
+                    ShowSnapInButtonStrip="false"
+                    ViewerBackColor="rgba(240, 240, 240, 1)"
+                    Height="80vh"
+                    OnControlInitialized="onControlInitialized"
+                    CollapsedSnapIn="true"
+                    ZoomMode="@ViewerZoomMode.ZoomModeHeightViewer"/>
+            </div>
+            
+            <div class="grid col-6 vh-100">
+                @if (_grid is not null)
+                {
+                    <MudTable Items="@_grid" Hover="true" Breakpoint="Breakpoint.None" LoadingProgressColor="Color.Info">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6">@(DocumentDataStore.GetTemplateById(_classificationResult?.Template.Identifier).Name)</MudText>
+                        </ToolBarContent>
+                        <HeaderContent>
+                                <MudTh><b>Field name</b></MudTh>
+                            <MudTh><b>Field value</b></MudTh>
+                            <MudTh><b>Validation state</b></MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="File name">@context.key</MudTd>
+                            <MudTd DataLabel="">@context.value.Value</MudTd>
+                            <MudTd DataLabel="" Class="@GetCellClass(context.value)">@context.value.ValidationState</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    DocuVieware DvControl;
+    UserDocument? _document => DocumentDataStore.GetDocumentById(Id);
+    ProcessorResult? _classificationResult => UserCacheService.ClassificationResults.FirstOrDefault(r => r.Key?.Id == _document?.Id).Value;
+    IQueryable<(string key, ExtractedField value)>? _grid => _classificationResult?.ExtractedFields?.Select(r => (r.FieldName, r)).AsQueryable() ?? new List<(string key, ExtractedField value)>().AsQueryable();
+
+    private Task onControlInitialized()
+    {
+        if (_document is not null)
+        {
+            DvControl.LoadFromFile(_document.FilePath);
+        }
+        return Task.CompletedTask;
+    }
+
+    private string GetCellClass(ExtractedField? result)
+    {
+        return result?.ValidationState switch
+        {
+            FieldValidationState.Valid => "bg-success",
+            FieldValidationState.VerificationNeeded => "bg-warning",
+            _ => ""
+        };
+    }
+}

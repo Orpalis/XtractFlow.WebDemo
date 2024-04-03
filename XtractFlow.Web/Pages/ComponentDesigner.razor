@@ -1,0 +1,276 @@
+﻿@page "/component-designer"
+@using XTractFlow.API.Component;
+@using XTractFlow.API.Document.Fields;
+@using XTractFlow.API.Document;
+@using XTractFlow.API.Document.Fields.Validation;
+@using XtractFlow.Web.Services.DataStore
+@using System.Web
+@using System.Text.Json;
+@using XtractFlow.Web.Services
+
+@inject NavigationManager Navigation
+@inject IDocumentDataStore DocumentDataStore
+@inject UserCacheService UserCacheService
+@inject IJSRuntime JSRuntime
+
+<MudDialog IsVisible="@_modalOpen" IsVisibleChanged="@(b => _modalOpen = b)">
+    <DialogContent>
+        <pre style="max-height: 500px; overflow: scroll">@((MarkupString)HttpUtility.HtmlDecode(ComponentAsJson.Replace(@"\n", " <br /> ")))</pre>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _modalOpen = false">Close</MudButton>
+        <MudButton Color="Color.Primary" OnClick="CopyTextToClipboard">Copy to clipboard</MudButton>
+    </DialogActions>
+</MudDialog>
+
+<MudDialog IsVisible="_warningOpen">
+    <DialogContent>
+        Only one template will be proceed to run Field extraction if classification is disabled
+    </DialogContent>
+    <DialogActions>
+            <MudButton OnClick="() => _warningOpen = false">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <h1 class="text-center m-3">Component designer</h1>
+        </div>
+    </div>
+    <div class="row  mb-5">
+        <div class="col-8 pb-5">
+            <h2 class="m-0">Component configuration</h2>
+            
+            <MudChipSet MultiSelection="true" Mandatory="true">
+                <MudChip OnClick="() => IsClassifierEnabled = !IsClassifierEnabled" Color="Color.Primary" Default="true">Classification</MudChip>
+                <MudChip OnClick="() => IsExtractionEnabled = !IsExtractionEnabled" Color="Color.Primary" Default="false">Extraction</MudChip>
+                <MudChip OnClick="() => IsClassifierRefinerEnabled = !IsClassifierRefinerEnabled" Color="Color.Secondary" Disabled="@(!IsClassifierEnabled)" Default="false">Classification refiner</MudChip>
+            </MudChipSet>
+        </div>
+        
+        <div class="col-8">
+            <h2 class="m-0">Component templates</h2>
+        </div>
+        <div class="col-4">
+            <div class="d-flex justify-content-end">
+                @code{ bool disableTemplateMenu => IsExtractionOnly && _component.Templates.Any(); }
+                <MudButton Class="justify-content-center" Size="Size.Large" EndIcon="@Icons.Sharp.Code" OnClick="() => _modalOpen = true"></MudButton>
+                    <MudTooltip Text="Only one template can be set if Classification feature is disabled." ShowOnHover="disableTemplateMenu">
+                    <MudMenu StartIcon="@Icons.Material.Sharp.AddBox" Label="Add template" Color="Color.Default" Size="Size.Large" Disabled="disableTemplateMenu">
+                        @foreach (var template in DocumentTemplate.GetPredefinedTemplates())
+                        {
+                            <MudMenuItem
+                                Disabled="@_component.Templates.Contains(template)"
+                                OnClick="() => AddDocumentTemplate(template)">
+                                @template.Name
+                            </MudMenuItem>
+                        }
+                        <MudMenuItem OnClick="() => AddDocumentTemplate(new DocumentTemplate())">Custom template</MudMenuItem>
+                    </MudMenu>
+                </MudTooltip>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="accordion accordion-flush" id="accordionFlushExample">
+                @if (_component?.Templates is not null)
+                {
+                    @foreach (var template in _component.Templates)
+                    {
+                        <div class="accordion-item border">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#flush-collapse-@template.Identifier" aria-expanded="false" aria-controls="flush-collapse-@template.Identifier">
+                                <h5 class="accordion-header col-10" id="flush-heading-@template.Identifier">
+                                    <div class="align-self-center">
+                                        @template.Name
+                                    </div>
+                                </h5>
+                            </button>
+                            <div id="flush-collapse-@template.Identifier" class="accordion-collapse collapse" aria-labelledby="flush-heading-@template.Identifier" data-bs-parent="#accordionFlushExample">
+                                <div class="accordion-body">
+                                    <div class="form-floating mb-3">
+                                      <InputText AdditionalAttributes="@(new Dictionary<string, object> { { "name", "templateName" }, { "placeholder", "Template name" }, { "class", "form-control" } })" @bind-Value="@template.Name"/>
+                                      <label for="templateName">Template name</label>
+                                    </div>
+                                    <div class="form-floating mb-5">
+                                      <InputText AdditionalAttributes="@(new Dictionary<string, object> { { "class", "form-control" }, { "placeholder", "Semantic description" }, { "name", "templateSemanticDescription" } })" @bind-Value="@template.SemanticDescription"/>
+                                      <label for="templateSemanticDescription">Semantic description</label>
+                                    </div>
+                                    <fieldset class="col-12 p-3">
+                                        <div class="row mb-5">
+                                            <div class="col-10">
+                                                <legend>
+                                                    <span class="oi oi-data-transfer-upload" aria-hidden="true"></span>
+                                                    Template's fields
+                                                </legend>
+                                            </div>
+
+                                            <div class="col-2">
+                                                <MudButton OnClick="() => AddField(template)" Class="w-100" Variant="Variant.Filled" Color="Color.Default" StartIcon="@Icons.Material.Sharp.AddBox">New field</MudButton>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-center">
+                                            <label class="col-3 text-center col-form-label">Field name</label>
+                                            <label class="col-5 text-center col-form-label">Semantic description</label>
+                                            <label class="col-2 text-center col-form-label">Format</label>
+                                            <label class="col-2 text-center col-form-label">Validation method</label>
+                                        </div>
+                                        @if (template.Fields is not null)
+                                        {
+                                            @foreach (var field in template.Fields)
+                                            {
+                                                <div class="d-flex justify-content-start">
+                                                    <div class="col-3 p-1">
+                                                        <InputText @bind-Value="@field.Name" placeholder="Field name" class="form-control"/>
+                                                    </div>
+                                                    <div class="col-5 p-1">
+                                                        <InputText @bind-Value="@field.SemanticDescription" placeholder="What the field contains" class="form-control"/>
+                                                    </div>
+                                                    <div class="col-2 p-1">
+                                                        <InputSelect class="form-control" @bind-Value="@field.Format">
+                                                            @foreach (var dataType in Enum.GetValues(typeof(FieldDataFormat)))
+                                                            {
+                                                                <option value="@dataType">@dataType</option>
+                                                            }
+                                                        </InputSelect>
+                                                    </div>
+                                                    <div class="col-2 p-1">
+                                                        <select class="form-control" value="@(GetValidationMethod(field))" onchange="o => SetValidationMethod(field, o)">
+                                                            <option value="">None</option>
+                                                            @foreach (var validationMethod in Enum.GetValues(typeof(StandardFieldValidation)))
+                                                            {
+                                                                <option value="@validationMethod">@ValidationMethodMap[Enum.Parse<StandardFieldValidation>(validationMethod.ToString())]</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+
+                                    </fieldset>
+                                    <div class="row">
+                                        <div class="col-1 offset-11  d-flex justify-content-end">
+                                            <div class="btn btn-outline-danger" @onclick="() => DeleteTemplate(template)">
+                                                <div class="oi oi-trash"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+        @if (_component!.Templates!.Any())
+        {
+            <div class="col-12">
+                <div class="d-flex justify-content-end">
+                    <a class="btn btn-primary mt-5 p-2 ms-auto @(!IsClassifierEnabled || !IsExtractionEnabled ? "": "disabled")" @onclick="GoToNextStep">
+                        <span class="text">Next</span>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    ICollection<object>? _chips;
+    ProcessorComponent _component = new();
+    bool _modalOpen, _warningOpen;
+    string ComponentAsJson => JsonSerializer.Serialize(DocumentDataStore.Component, new JsonSerializerOptions { WriteIndented = true });
+    bool IsClassifierEnabled { get; set; }
+    bool IsClassifierRefinerEnabled { get; set; } = true;
+    bool IsExtractionEnabled { get; set; } = true;
+
+    bool IsExtractionOnly => IsClassifierEnabled is false && IsExtractionEnabled;
+    
+    Dictionary<StandardFieldValidation, string> ValidationMethodMap = new()
+    {
+        { StandardFieldValidation.CurrencyIntegrity, "Currency" },
+        { StandardFieldValidation.DateIntegrity, "Date" },
+        { StandardFieldValidation.EmailIntegrity, "Email" },
+        { StandardFieldValidation.NumberIntegrity, "Number" },
+        { StandardFieldValidation.PostalAddressIntegrity, "Postal address" },
+        { StandardFieldValidation.PhoneNumberIntegrity, "Phone number" },
+        { StandardFieldValidation.CreditCardNumberIntegrity, "Credit card" },
+        { StandardFieldValidation.URIIntegrity, "URI" },
+        { StandardFieldValidation.VehicleIdentificationNumberIntegrity, "Vehicle identification number" },
+        { StandardFieldValidation.IBANIntegrity, "IBAN" },
+        { StandardFieldValidation.VATIdIntegrity, "VAT number" }
+    };
+    
+    protected override void OnInitialized()
+    {
+        _component = DocumentDataStore.Component;
+        DocumentDataStore.RemoveAllFiles();
+        UserCacheService.ClassificationResults.Clear();
+    }
+
+    void AddDocumentTemplate(DocumentTemplate template)
+    {
+        _component.Templates = _component.Templates.Append(template).ToList();
+        StateHasChanged();
+    }
+
+    void AddField(DocumentTemplate documentDefinition)
+    {
+        documentDefinition.AddField(new TemplateField());
+        StateHasChanged();
+    }
+
+    void GoToNextStep()
+    {
+        _component.EnableClassifier = IsClassifierEnabled;
+        _component.EnableFieldsExtraction = IsExtractionEnabled;
+        _component.EnableClassifierRefiner = IsClassifierRefinerEnabled;
+        
+        DocumentDataStore.Component = _component;
+        DocumentDataStore.Save();
+        StateHasChanged();
+        Navigation.NavigateTo("/files");
+    }
+    
+    private string? GetValidationMethod(TemplateField field)
+    {
+        return field.StandardValidationMethods?.FirstOrDefault()?.ValidationMethod.ToString();
+    }
+
+    private void SetValidationMethod(TemplateField field, string? validationMethod)
+    {
+        if (validationMethod is not null)
+        {
+            field.StandardValidationMethods = new[] { new StandardFieldValidationMethod(Enum.Parse<StandardFieldValidation>(validationMethod)) };
+        }
+    }
+
+    private void DeleteTemplate(DocumentTemplate template)
+    {
+        var nl = _component.Templates.ToList();
+        nl.Remove(template);
+        _component.Templates = nl;
+    }
+    
+    private async Task CopyTextToClipboard()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", ComponentAsJson);
+        }
+        catch
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Permission denied, copy text manually");
+        }
+    }
+
+    private void OnChipsChanged(ICollection<object> _)
+    {
+        if (IsExtractionOnly &&  _component.Templates.Count > 1)
+        {
+            _warningOpen = true;
+            _component.Templates = _component.Templates.Take(1).ToList();
+        }
+    }
+
+}
