@@ -4,7 +4,6 @@ using XtractFlow.Web.Helpers;
 using XtractFlow.Web.Services;
 using XtractFlow.Web.Services.DataStore;
 using XTractFlow.API.LLM.Providers;
-using XtractFlow.Processor;
 using XtractFlow.Web.Middlewares;
 
 
@@ -17,7 +16,6 @@ builder.Services.AddMvcCore();
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<IDocumentDataStore, CircuitDocumentdataStore>();
-builder.Services.AddTransient<Processor>();
 builder.Services.AddTransient<Thumbnail>();
 builder.Services.AddScoped<UserCacheService>();
 builder.Services.AddScoped<BlazorTransitionableRoute.IRouteTransitionInvoker, BlazorTransitionableRoute.DefaultRouteTransitionInvoker>();

@@ -1,14 +1,13 @@
 @page "/files"
+@using XTractFlow.API
 @using XtractFlow.Web.Services
 @using XtractFlow.Web.Components
 @using XtractFlow.Web.Data
 @using XtractFlow.Web.Services.DataStore
-@using XtractFlow.Processor
 
 @inject NavigationManager Navigation
 @inject IDocumentDataStore DocumentDataStore
 @inject UserCacheService UserCacheService
-@inject Processor Processor
 
 <div class="row align-items-center">
     <div class="col-2">
@@ -22,7 +21,7 @@
     </div>
     <div class="col-1">
         <div class="d-flex justify-content-end">
-            <a class="btn btn-primary ms-auto" @onclick="GoNextStep">
+            <a class="btn btn-primary @(processed is false ? "disabled" : "") ms-auto" @onclick="GoNextStep">
                 <span class="text">Next</span>
             </a>
         </div>
@@ -52,7 +51,7 @@
             <div class="col-12">
                 <div class="d-flex justify-content-end">
                     <a class="btn btn-success mt-5 p-2 ms-auto @(processing || processed ? "disabled" : "")" @onclick="ProcessFiles">
-                        <span class="text">Process files...</span>
+                        <span class="text">@(processing ? "Processing..." : "Process files...")</span>
                     </a>
                     <a class="btn btn-primary mt-5 p-2 ms-auto @(processed is false ? "disabled" : "")" @onclick="GoNextStep">
                         <span class="text">Next</span>
@@ -90,17 +89,20 @@
         var i = 0;
         progressBarValue = 0;
         await InvokeAsync(StateHasChanged);
-        
-        await foreach (var processorResult in Processor.ProcessFilesAsync(DocumentDataStore.Documents.Select(p => p.FilePath), DocumentDataStore.Component))
+
+        await Parallel.ForEachAsync(DocumentDataStore.Documents.Select(p => p.FilePath), async (filepath, cts) =>
         {
-            var documentFile = DocumentDataStore.Documents.First(p => p.FilePath == processorResult.filepath);
-            UserCacheService.AddClassification(documentFile, processorResult.result);
+            DocumentProcessor _documentprocessor = new DocumentProcessor();
+            var result = await _documentprocessor.ProcessAsync(filepath,  DocumentDataStore.Component, cts);
+
+            var documentFile = DocumentDataStore.Documents.First(p => p.FilePath == filepath);
+            UserCacheService.AddClassification(documentFile, result);
             await InvokeAsync(() =>
             {
                 progressBarValue = (int)((double) ++i / fileCount * 100);
                 StateHasChanged();
             });
-        }
+        });
 
         progressBarValue = null;
         processing = false;

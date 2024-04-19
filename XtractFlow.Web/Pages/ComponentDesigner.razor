@@ -42,8 +42,6 @@
             <h2 class="m-0">Component configuration</h2>
             
             <MudChipSet MultiSelection="true" Mandatory="true">
-                <MudChip OnClick="() => IsClassifierEnabled = !IsClassifierEnabled" Color="Color.Primary" Default="true">Classification</MudChip>
-                <MudChip OnClick="() => IsExtractionEnabled = !IsExtractionEnabled" Color="Color.Primary" Default="false">Extraction</MudChip>
                 <MudChip OnClick="() => IsClassifierEnabled = !IsClassifierEnabled" Color="Color.Primary" Value="0" Default="true">Classification</MudChip>
                 <MudChip OnClick="() => IsExtractionEnabled = !IsExtractionEnabled" Color="Color.Primary" Value="1" Default="false">Extraction</MudChip>
                 <MudChip OnClick="() => IsClassifierRefinerEnabled = !IsClassifierRefinerEnabled" Color="Color.Secondary" Disabled="@(!IsClassifierEnabled)" Default="false">Classification refiner</MudChip>

@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XtractFlow.Processor", "XtractFlow.Processor\XtractFlow.Processor.csproj", "{3AD96AA6-3B34-4A75-B075-1B33401E4125}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XtractFlow.WebDemo", "XtractFlow.Web\XtractFlow.WebDemo.csproj", "{5BF2247E-A7DC-479C-BFC4-89F7EA5878C0}"
 EndProject
 Global
@@ -16,10 +14,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{3AD96AA6-3B34-4A75-B075-1B33401E4125}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3AD96AA6-3B34-4A75-B075-1B33401E4125}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3AD96AA6-3B34-4A75-B075-1B33401E4125}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3AD96AA6-3B34-4A75-B075-1B33401E4125}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5BF2247E-A7DC-479C-BFC4-89F7EA5878C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5BF2247E-A7DC-479C-BFC4-89F7EA5878C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BF2247E-A7DC-479C-BFC4-89F7EA5878C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
