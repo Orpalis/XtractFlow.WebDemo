@@ -12,7 +12,7 @@
   <ItemGroup>
     <PackageReference Include="BlazorTransitionableRoute" Version="4.0.0" />
     <PackageReference Include="DocuVieware.Blazor" Version="0.9.0.1-rc" />
-    <PackageReference Include="GdPicture.XtractFlow" Version="1.0.0.1" />
+    <PackageReference Include="GdPicture.XtractFlow" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="MudBlazor" Version="6.11.1" />
   </ItemGroup>

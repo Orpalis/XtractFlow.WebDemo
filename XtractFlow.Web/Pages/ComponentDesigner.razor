@@ -44,6 +44,8 @@
             <MudChipSet MultiSelection="true" Mandatory="true">
                 <MudChip OnClick="() => IsClassifierEnabled = !IsClassifierEnabled" Color="Color.Primary" Default="true">Classification</MudChip>
                 <MudChip OnClick="() => IsExtractionEnabled = !IsExtractionEnabled" Color="Color.Primary" Default="false">Extraction</MudChip>
+                <MudChip OnClick="() => IsClassifierEnabled = !IsClassifierEnabled" Color="Color.Primary" Value="0" Default="true">Classification</MudChip>
+                <MudChip OnClick="() => IsExtractionEnabled = !IsExtractionEnabled" Color="Color.Primary" Value="1" Default="false">Extraction</MudChip>
                 <MudChip OnClick="() => IsClassifierRefinerEnabled = !IsClassifierRefinerEnabled" Color="Color.Secondary" Disabled="@(!IsClassifierEnabled)" Default="false">Classification refiner</MudChip>
             </MudChipSet>
         </div>
@@ -166,7 +168,7 @@
         {
             <div class="col-12">
                 <div class="d-flex justify-content-end">
-                    <a class="btn btn-primary mt-5 p-2 ms-auto @(!IsClassifierEnabled || !IsExtractionEnabled ? "": "disabled")" @onclick="GoToNextStep">
+                    <a class="btn btn-primary mt-5 p-2 ms-auto @(IsClassifierEnabled || IsExtractionEnabled ? "": "disabled")" @onclick="GoToNextStep">
                         <span class="text">Next</span>
                     </a>
                 </div>
@@ -222,6 +224,13 @@
 
     void GoToNextStep()
     {
+        if (IsExtractionOnly &&  _component.Templates.Count > 1)
+        {
+            _warningOpen = true;
+            _component.Templates = _component.Templates.Take(1).ToList();
+            return;
+        }
+        
         _component.EnableClassifier = IsClassifierEnabled;
         _component.EnableFieldsExtraction = IsExtractionEnabled;
         _component.EnableClassifierRefiner = IsClassifierRefinerEnabled;
@@ -263,14 +272,4 @@
             await JSRuntime.InvokeVoidAsync("alert", "Permission denied, copy text manually");
         }
     }
-
-    private void OnChipsChanged(ICollection<object> _)
-    {
-        if (IsExtractionOnly &&  _component.Templates.Count > 1)
-        {
-            _warningOpen = true;
-            _component.Templates = _component.Templates.Take(1).ToList();
-        }
-    }
-
 }

@@ -81,7 +81,7 @@ if (openAIConfig.Exists())
     var openAIApiKey = openAIConfig.GetSection("ApiKey");
     if (openAIApiKey.Exists() && string.IsNullOrEmpty(openAIApiKey.Value) is false)
     {
-        var model = OpenAIProvider.OpenAILargeLanguageModel.Gpt35Turbo16K;
+        var model = OpenAIProvider.OpenAILargeLanguageModel.Gpt35Turbo;
         var modelConfig = openAIConfig.GetSection("Model");
 
         if (modelConfig.Exists() && string.IsNullOrEmpty(modelConfig.Value) is false)
