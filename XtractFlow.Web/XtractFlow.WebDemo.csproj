@@ -11,7 +11,7 @@
   
   <ItemGroup>
     <PackageReference Include="BlazorTransitionableRoute" Version="4.0.0" />
-    <PackageReference Include="DocuVieware.Blazor" Version="0.9.0.1-rc" />
+    <PackageReference Include="DocuVieware.Blazor" Version="0.9.1-rc" />
     <PackageReference Include="GdPicture.XtractFlow" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="MudBlazor" Version="6.11.1" />
@@ -20,6 +20,7 @@
   <ItemGroup>
     <Folder Include="Resources\" />
     <Folder Include="wwwroot\circuit_store\" />
+    <Folder Include="wwwroot\circuit_store\178637d2-91b3-41e1-92e9-2be273abf891\" />
   </ItemGroup>
 
   <ItemGroup>
